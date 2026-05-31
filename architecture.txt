@@ -1,0 +1,58 @@
+veritas/
+├── frontend/                 # React app
+│   ├── public/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Dashboard/
+│   │   │   ├── Evaluation/
+│   │   │   ├── Models/
+│   │   │   ├── Results/
+│   │   │   └── shared/
+│   │   ├── pages/
+│   │   │   ├── Home.jsx
+│   │   │   ├── Evaluate.jsx
+│   │   │   ├── Benchmark.jsx
+│   │   │   ├── Results.jsx
+│   │   │   └── Compare.jsx
+│   │   ├── hooks/
+│   │   ├── services/        # API calls to backend
+│   │   ├── store/           # State management
+│   │   └── utils/
+│   ├── package.json
+│   └── Dockerfile
+├── backend/                  # FastAPI app
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── routes/
+│   │   │   │   ├── evaluate.py
+│   │   │   │   ├── benchmark.py
+│   │   │   │   ├── models.py
+│   │   │   │   └── results.py
+│   │   │   └── dependencies.py
+│   │   ├── core/
+│   │   │   ├── config.py
+│   │   │   └── logger.py
+│   │   ├── metrics/
+│   │   │   ├── base.py
+│   │   │   ├── lexical.py
+│   │   │   ├── semantic.py
+│   │   │   ├── hallucination.py
+│   │   │   └── toxicity.py
+│   │   ├── models/
+│   │   │   ├── base.py
+│   │   │   ├── openrouter.py
+│   │   ├── evaluator/
+│   │   │   ├── pipeline.py
+│   │   │   ├── judge.py
+│   │   │   └── consistency.py
+│   │   ├── database/
+│   │   │   ├── models.py
+│   │   │   └── repository.py
+│   │   └── main.py
+│   ├── tests/
+│   ├── requirements.txt
+│   └── Dockerfile
+├── docker-compose.yml
+├── .env
+├── .gitignore
+└── README.md
