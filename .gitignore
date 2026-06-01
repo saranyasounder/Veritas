@@ -44,4 +44,6 @@ logs/
 
 # ML models cache
 .cache/
-models/
+*.bin
+*.pt
+*.safetensors
