@@ -14,7 +14,11 @@ class BLEUMetric(BaseMetric):
         source: Optional[str] = None
     ) -> MetricResult:
         if not reference:
-            raise ValueError("BLEU requires a reference string")
+            return MetricResult(
+                name=self.name,
+                score=0.0,
+                details={"skipped": "no reference provided"}
+            )
         
         reference_tokens = reference.lower().split()
         hypothesis_tokens = hypothesis.lower().split()
@@ -44,7 +48,11 @@ class ROUGEMetric(BaseMetric):
         source: Optional[str] = None
     ) -> MetricResult:
         if not reference:
-            raise ValueError("ROUGE requires a reference string")
+            return MetricResult(
+                name=self.name,
+                score=0.0,
+                details={"skipped": "no reference provided"}
+            )
         
         scores = self.scorer.score(reference, hypothesis)
         

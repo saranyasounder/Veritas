@@ -24,7 +24,11 @@ class HallucinationMetric(BaseMetric):
         # hallucination detection requires a source document to compare against
         # without it there is nothing to verify the answer against
         if not source:
-            raise ValueError("Hallucination detection requires a source document")
+            return MetricResult(
+                name=self.name,
+                score=0.0,
+                details={"skipped": "no source provided"}
+            )
 
         # convert both texts into embedding vectors
         # embeddings[0] = hypothesis embedding

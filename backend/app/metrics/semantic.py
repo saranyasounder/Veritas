@@ -11,7 +11,11 @@ class BERTScoreMetric(BaseMetric):
 
     def compute(self, hypothesis: str, reference: Optional[str] = None, source: Optional[str] = None) -> MetricResult:
         if not reference:
-            raise ValueError("BERTScore requires a reference string")
+            return MetricResult(
+                name=self.name,
+                score=0.0,
+                details={"skipped": "no reference provided"}
+            )
         
         P, R, F1 = bert_score([hypothesis], [reference], lang='en')
         return MetricResult(
@@ -31,7 +35,11 @@ class CosineSimilarityMetric(BaseMetric):
 
     def compute(self, hypothesis: str, reference: Optional[str] = None, source: Optional[str] = None) -> MetricResult:
         if not reference:
-            raise ValueError("Cosine Similarity requires a reference string")
+            return MetricResult(
+            name=self.name,
+            score=0.0,
+            details={"skipped": "no reference provided"}
+        )
         
         embeddings = self.model.encode([hypothesis, reference])
         cosine_sim = cosine_similarity([embeddings[0]], [embeddings[1]])[0][0]
