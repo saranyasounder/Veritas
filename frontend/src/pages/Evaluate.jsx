@@ -9,6 +9,29 @@ const MODELS = [
     { id: 'google/gemini-pro', label: 'Gemini Pro' },
 ]
 
+const Toggle = ({ label, sublabel, enabled, onToggle }) => (
+    <div className="flex items-center justify-between">
+        <div>
+            <p className="text-sm font-medium text-gray-300">{label}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{sublabel}</p>
+        </div>
+        <button
+            onClick={onToggle}
+            className="relative w-12 h-6 rounded-full transition-all duration-300 focus:outline-none"
+            style={{
+                background: enabled
+                    ? 'linear-gradient(135deg, #22c55e, #14b8a6)'
+                    : 'rgba(255,255,255,0.1)'
+            }}
+        >
+            <div
+                className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-300"
+                style={{ left: enabled ? '26px' : '2px' }}
+            />
+        </button>
+    </div>
+)
+
 const Evaluate = () => {
     const [form, setForm] = useState({
         prompt: '',
@@ -16,6 +39,8 @@ const Evaluate = () => {
         reference: '',
         source: '',
     })
+    const [autoReference, setAutoReference] = useState(true)
+    const [autoSource, setAutoSource] = useState(true)
     const [loading, setLoading] = useState(false)
     const [result, setResult] = useState(null)
     const [error, setError] = useState(null)
@@ -30,19 +55,19 @@ const Evaluate = () => {
         setError(null)
         setResult(null)
 
-        try {
-            const data = await evaluateModel({
-                prompt: form.prompt,
-                model_id: form.model_id,
-                reference: form.reference || null,
-                source: form.source || null,
-            })
-            setResult(data)
-        } catch (err) {
-            setError('Evaluation failed. Please try again.')
-        } finally {
-            setLoading(false)
-        }
+       try {
+    const data = await evaluateModel({
+        prompt: form.prompt,
+        model_id: form.model_id,
+        reference: autoReference ? null : form.reference || null,
+        source: autoSource ? null : form.source || null,
+    })
+    setResult(data)
+} catch (err) {
+    setError('Evaluation failed. Please try again.')
+} finally {
+    setLoading(false)
+}
     }
 
     const getScoreColor = (score) => {
@@ -53,8 +78,6 @@ const Evaluate = () => {
 
     return (
         <div className="relative min-h-screen">
-
-            {/* background orbs */}
             <div className="orb orb-green" style={{ top: '100px', right: '5%' }} />
             <div className="orb orb-teal" style={{ bottom: '100px', left: '5%' }} />
 
@@ -108,37 +131,58 @@ const Evaluate = () => {
                         </select>
                     </div>
 
-                    {/* reference */}
-                    <div className="flex flex-col gap-2">
-                        <label className="text-sm font-medium text-gray-300">
-                            Reference Answer{' '}
-                            <span className="text-gray-500 text-xs">(optional — used for BLEU, ROUGE, BERTScore)</span>
-                        </label>
-                        <textarea
-                            name="reference"
-                            value={form.reference}
-                            onChange={handleChange}
-                            placeholder="The expected or ideal answer..."
-                            rows={3}
-                            className="dark-input resize-none"
-                        />
-                    </div>
+                    {/* divider */}
+                    <div className="border-t border-gray-800" />
 
-                    {/* source */}
-                    <div className="flex flex-col gap-2">
-                        <label className="text-sm font-medium text-gray-300">
-                            Source Document{' '}
-                            <span className="text-gray-500 text-xs">(optional — used for hallucination detection)</span>
-                        </label>
-                        <textarea
-                            name="source"
-                            value={form.source}
-                            onChange={handleChange}
-                            placeholder="Paste the source document the answer should be grounded in..."
-                            rows={3}
-                            className="dark-input resize-none"
-                        />
-                    </div>
+                    {/* auto reference toggle */}
+                    <Toggle
+                        label="Auto-generate Reference"
+                        sublabel={autoReference
+                            ? "GPT-4o will generate the ideal reference answer"
+                            : "Provide your own reference answer below"
+                        }
+                        enabled={autoReference}
+                        onToggle={() => setAutoReference(!autoReference)}
+                    />
+
+                    {/* manual reference input */}
+                    {!autoReference && (
+                        <div className="flex flex-col gap-2 fade-in">
+                            <textarea
+                                name="reference"
+                                value={form.reference}
+                                onChange={handleChange}
+                                placeholder="The expected or ideal answer..."
+                                rows={3}
+                                className="dark-input resize-none"
+                            />
+                        </div>
+                    )}
+
+                    {/* auto source toggle */}
+                    <Toggle
+                        label="Auto-fetch Source Document"
+                        sublabel={autoSource
+                            ? "Tavily will search the web for relevant source content"
+                            : "Provide your own source document below"
+                        }
+                        enabled={autoSource}
+                        onToggle={() => setAutoSource(!autoSource)}
+                    />
+
+                    {/* manual source input */}
+                    {!autoSource && (
+                        <div className="flex flex-col gap-2 fade-in">
+                            <textarea
+                                name="source"
+                                value={form.source}
+                                onChange={handleChange}
+                                placeholder="Paste the source document the answer should be grounded in..."
+                                rows={3}
+                                className="dark-input resize-none"
+                            />
+                        </div>
+                    )}
 
                     {/* submit */}
                     <button
