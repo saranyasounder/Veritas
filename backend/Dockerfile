@@ -4,7 +4,7 @@ FROM python:3.13-slim
 WORKDIR /app
 
 
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install -r requirements.txt
 
 # 4. Copy the rest of your code
