@@ -18,28 +18,17 @@ class EvaluationRepository:
         self.db = db_session
 
     def save_evaluation(self, evaluation_result: EvaluationResult) -> Evaluation:
-        """Persists an evaluation result to the database."""
-        # serialize metrics from MetricResult objects to plain dicts
-        # PostgreSQL JSON column requires serializable types
-        serialized_metrics = {
-            name: {
-                "score": result.score,
-                "passed": result.passed,
-                "details": result.details
-            }
-            for name, result in evaluation_result.metrics.items()
-        }
-
+    # metrics are already serialized dicts at this point
+    # no need to convert — just pass them directly
         evaluation = Evaluation(
-            prompt=evaluation_result.prompt,
-            model=evaluation_result.model,
-            response=evaluation_result.response,
-            metrics=serialized_metrics
-        )
+        prompt=evaluation_result.prompt,
+        model=evaluation_result.model,
+        response=evaluation_result.response,
+        metrics=evaluation_result.metrics  # already plain dicts
+    )
 
         self.db.add(evaluation)
         self.db.commit()
-        # refresh pulls auto generated id and timestamp from PostgreSQL
         self.db.refresh(evaluation)
 
         logger.info(f"Evaluation saved | id={evaluation.id} | model={evaluation.model}")

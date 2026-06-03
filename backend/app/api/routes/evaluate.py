@@ -1,12 +1,14 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
+from sqlalchemy.orm import Session
 from app.models.openrouter import OpenRouterModel
 from app.evaluator.pipeline import EvaluationPipeline
-from app.evaluator.judge import LLMJudge
 from app.metrics.lexical import BLEUMetric, ROUGEMetric
 from app.metrics.semantic import BERTScoreMetric, CosineSimilarityMetric
 from app.metrics.hallucination import HallucinationMetric
+from app.database.repository import EvaluationRepository
+from app.database.session import get_db
 from app.core.logger import get_logger
 
 # module level logger for tracking all evaluation requests
@@ -30,35 +32,35 @@ class EvaluateRequest(BaseModel):
 
 
 @router.post("/evaluate")
-def evaluate(request: EvaluateRequest):
+def evaluate(request: EvaluateRequest, db: Session = Depends(get_db)):
     """
     Runs a full evaluation cycle for a single prompt.
-    
+
     Flow:
       1. Initialize model and metrics
       2. Run evaluation pipeline — generates response and scores it
-      3. Return structured result to frontend
-      
+      3. Save result to database
+      4. Return structured result to frontend
+
     Returns:
         EvaluationResult containing response, all metric scores, and timestamp
-        
+
     Raises:
         HTTPException 500: if model generation or any metric fails
     """
     logger.info(f"Evaluation request received | model={request.model_id}")
 
     # initialize model with the requested model id
-    # OpenRouterModel handles all models through one unified client
     model = OpenRouterModel(model_id=request.model_id)
 
-    # initialize all metrics for this evaluation
-    # new instances per request ensures no state bleeds between requests
+    # initialize all metrics — new instances per request
+    # ensures no state bleeds between concurrent requests
     metrics = [
-        BLEUMetric(),            # word overlap — precision focused
-        ROUGEMetric(),           # word overlap — recall focused
-        BERTScoreMetric(),       # semantic similarity using embeddings
-        CosineSimilarityMetric(), # cosine distance between embeddings
-        HallucinationMetric()    # checks if response is grounded in source
+        BLEUMetric(),
+        ROUGEMetric(),
+        BERTScoreMetric(),
+        CosineSimilarityMetric(),
+        HallucinationMetric()
     ]
 
     # pipeline orchestrates model generation and metric scoring
@@ -67,15 +69,22 @@ def evaluate(request: EvaluateRequest):
     try:
         result = evaluation_pipeline.evaluate(
             prompt=request.prompt,
-            reference=request.reference,  # passed to lexical and semantic metrics
-            source=request.source         # passed to hallucination metric
+            reference=request.reference,
+            source=request.source
         )
     except Exception as e:
-        # log the full error before returning HTTP response
-        # HTTPException converts the error into a proper JSON error response
-        # with status code 500 so the frontend can handle it gracefully
         logger.error(f"Evaluation failed | model={request.model_id} | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+    # save result to database for historical tracking
+    try:
+        repo = EvaluationRepository(db)
+        repo.save_evaluation(result)
+        logger.info(f"Evaluation saved to database | model={request.model_id}")
+    except Exception as e:
+        # log but don't fail the request if save fails
+        # user still gets their result even if persistence fails
+        logger.error(f"Failed to save evaluation | error={str(e)}")
 
     logger.info(f"Evaluation complete | model={request.model_id}")
     return result
