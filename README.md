@@ -39,7 +39,6 @@ Create the database:
 ```bash
 psql postgres
 CREATE DATABASE veritas;
-\q
 ```
 
 Start the backend:
