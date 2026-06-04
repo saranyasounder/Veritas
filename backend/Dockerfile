@@ -8,7 +8,7 @@ COPY backend/requirements.txt .
 RUN pip install -r requirements.txt
 
 # 4. Copy the rest of your code
-COPY . .
+COPY backend/ .
 
 # 5. Expose the port
 EXPOSE 8000
