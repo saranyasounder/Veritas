@@ -287,10 +287,4 @@ This project was inspired by manual LLM evaluation work done during AI research 
 
 ---
 
-## License
-
-MIT
-
----
-
 Built by Saranya Sounder Rajan
